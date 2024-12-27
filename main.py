@@ -50,6 +50,8 @@ def drawGrid():
 
 while True:
     drawGrid()
+    pygame.display.set_caption(f"Snake Game | Points: {point}")
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -144,4 +146,3 @@ while True:
         point += 1
         tail_length += 1
 
-        pygame.display.set_caption(f"Snake Game | Points: {point}")
