@@ -100,7 +100,6 @@ def restartGame():
                 snake_location = [snake_x, snake_y]
                 snake_body = [[140, 60], [120, 60], [100, 60], [80, 60]]
                 fps = 10
-                startGame()
                 break
             if event.key == K_n:
                 endGame()
