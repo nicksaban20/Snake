@@ -22,3 +22,5 @@
             snake_location.insert(0, x_value + blockSize * i)
             snake_location.insert(1, y_value)
         x_value += blockSize
+
+        

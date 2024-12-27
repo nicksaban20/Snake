@@ -21,37 +21,41 @@ SCREEN = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 CLOCK = pygame.time.Clock()
 SCREEN.fill(BLACK)
 
+
+
 number = 0
-blockSize = 20
-direction = 0
-point = 0
-tail_length = 0
+BLOCK_SIZE = 20
+DIRECTION = 0
+POINT = 0
+TAIL_LENGTH = 1
 red = (255, 0, 0)
 snake_color = (57, 255, 20)
 apple_color = (238, 75, 43)
-apple_posW = random.randint(0, WINDOW_WIDTH/blockSize - blockSize/10)
-apple_posH = random.randint(0, WINDOW_HEIGHT/blockSize - blockSize/10)
-x_value , y_value = (apple_posW * blockSize, apple_posH * blockSize)
-pygame.draw.rect(SCREEN, snake_color, pygame.Rect(x_value, y_value, blockSize, blockSize))
+apple_posW = random.randint(0, WINDOW_WIDTH//BLOCK_SIZE - 1)
+apple_posH = random.randint(0, WINDOW_HEIGHT//BLOCK_SIZE - 1)
+x_value, y_value = (100, 60)
 snake_location = [x_value, y_value]
-font_style = pygame.font.SysFont(None, 50)
 
-
-def message(msg,color):
+def message(msg, color):
     mesg = font_style.render(msg, True, color)
     SCREEN.blit(mesg, [WINDOW_WIDTH/5, WINDOW_HEIGHT/2])
 
 def drawGrid():
-    for x in range(0, WINDOW_WIDTH, blockSize):
-        for y in range(0, WINDOW_HEIGHT, blockSize):
-            rect = pygame.Rect(x, y, blockSize, blockSize)
+    for x in range(0, WINDOW_WIDTH, BLOCK_SIZE):
+        for y in range(0, WINDOW_HEIGHT, BLOCK_SIZE):
+            rect = pygame.Rect(x, y, BLOCK_SIZE, BLOCK_SIZE)
             pygame.draw.rect(SCREEN, WHITE, rect, 1)
 
+def drawSnake():
+    for segment in snake_body:
+        pygame.draw.rect(SCREEN, snake_color, pygame.Rect(segment[0], segment[1], BLOCK_SIZE, BLOCK_SIZE))
+
+snake_body = [[140, 60], [120, 60], [100, 60], [80, 60]]
 
 while True:
     drawGrid()
-    pygame.display.set_caption(f"Snake Game | Points: {point}")
-    
+    pygame.display.set_caption(f"Snake Game | Points: {POINT}")
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -62,87 +66,55 @@ while True:
                 exit()
 
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_UP] and y_value > 0:
-            direction = 1
-    if keys[pygame.K_DOWN] and y_value < WINDOW_HEIGHT - blockSize:
-            direction = 2
-    if keys[pygame.K_LEFT] and x_value > 0:
-            direction = 3  
-    if keys[pygame.K_RIGHT] and x_value < WINDOW_WIDTH - blockSize:
-            direction = 4  
-            
+    if keys[pygame.K_UP] and DIRECTION != 2:
+        DIRECTION = 1
+    if keys[pygame.K_DOWN] and DIRECTION != 1:
+        DIRECTION = 2
+    if keys[pygame.K_LEFT] and DIRECTION != 4:
+        DIRECTION = 3  
+    if keys[pygame.K_RIGHT] and DIRECTION != 3:
+        DIRECTION = 4  
 
-    if direction == 1 and y_value > 0 - blockSize:
-        snake_location.append(x_value)
-        snake_location.append(y_value + blockSize)
-        y_value -= blockSize
-    if direction == 2 and y_value < WINDOW_HEIGHT:
-        snake_location.append(x_value)
-        snake_location.append(y_value - blockSize)
-        y_value += blockSize
-    if direction == 3 and x_value > 0 - blockSize:
-        snake_location.append(x_value + blockSize)
-        snake_location.append(y_value)
-        x_value -= blockSize
-    if direction == 4 and x_value < WINDOW_WIDTH:
-        snake_location.append(x_value - blockSize)
-        snake_location.append(y_value)
-        x_value += blockSize
+    if DIRECTION == 1 and y_value > 0:
+        y_value -= BLOCK_SIZE
+    if DIRECTION == 2 and y_value < WINDOW_HEIGHT - BLOCK_SIZE:
+        y_value += BLOCK_SIZE
+    if DIRECTION == 3 and x_value > 0:
+        x_value -= BLOCK_SIZE
+    if DIRECTION == 4 and x_value < WINDOW_WIDTH - BLOCK_SIZE:
+        x_value += BLOCK_SIZE
 
-    if direction == 1 and y_value == 0 - blockSize:
-        SCREEN.fill(WHITE)
-        message(f"You lost and got {point} points!",red)
-        pygame.display.update()
-        time.sleep(2)
-        pygame.quit()
-        exit()
-    if direction == 2 and y_value == WINDOW_HEIGHT:
-        SCREEN.fill(WHITE)
-        message(f"You lost and got {point} points!",red)
-        pygame.display.update()
-        time.sleep(2)
-        pygame.quit()
-        exit()
-    if direction == 3 and x_value == 0 - blockSize:
-        SCREEN.fill(WHITE)
-        message(f"You lost and got {point} points!",red)
-        pygame.display.update()
-        time.sleep(2)
-        pygame.quit()
-        exit()
-    if direction == 4 and x_value == WINDOW_WIDTH:
-        SCREEN.fill(WHITE)
-        message(f"You lost and got {point} points!",red)
-        pygame.display.update()
-        time.sleep(2)
-        pygame.quit()
-        exit()
+    snake_body.append([x_value, y_value])
+    if len(snake_body) > TAIL_LENGTH:
+        del snake_body[0]
 
-    time.sleep(0.075)
+    if x_value == (apple_posW * BLOCK_SIZE) and y_value == (apple_posH * BLOCK_SIZE):
+        apple_posW = random.randint(0, WINDOW_WIDTH//BLOCK_SIZE - 1)
+        apple_posH = random.randint(0, WINDOW_HEIGHT//BLOCK_SIZE - 1)
+        snake_body.append([x_value, y_value])
+        POINT += 1
+        TAIL_LENGTH += 1
+
     SCREEN.fill(BLACK)
     drawGrid()
-    pygame.draw.rect(SCREEN, snake_color, pygame.Rect(x_value, y_value, blockSize, blockSize))
+    drawSnake()
+    pygame.draw.rect(SCREEN, apple_color, pygame.Rect(apple_posW * BLOCK_SIZE, apple_posH * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
     pygame.display.flip()
 
-    pygame.draw.rect(SCREEN, apple_color, pygame.Rect(apple_posW * blockSize, apple_posH * blockSize, blockSize, blockSize))
-    pygame.display.flip()
+    print(snake_body)
+    print()
+    print(f"Apple: {apple_posW * BLOCK_SIZE}, {apple_posH * BLOCK_SIZE}")
+    print()
+    print(f"Snake: {x_value}, {y_value}")
+    print()
+    print(f"Tails: {TAIL_LENGTH}")
 
-    number = 0
+    if x_value <= 0 or x_value >= WINDOW_WIDTH - (TAIL_LENGTH * BLOCK_SIZE) or y_value <= 0 or y_value >= WINDOW_HEIGHT - (TAIL_LENGTH * BLOCK_SIZE):
+        SCREEN.fill(WHITE)
+        message(f"You lost and got {POINT} points!", red)
+        pygame.display.update()
+        time.sleep(2)
+        pygame.quit()
+        exit()
 
-    for i in range(0, tail_length):
-        pygame.draw.rect(SCREEN, snake_color, pygame.Rect(snake_location[number], snake_location[number + 1], blockSize, blockSize))
-        pygame.display.flip()
-        number += 2
-        print(i)
-
-    snake_location.clear()
-    snake_location = [0, 0]
-
-    if x_value == apple_posW * blockSize and y_value == apple_posH * blockSize:
-        apple_posW = random.randint(0, WINDOW_WIDTH/blockSize - blockSize/10)
-        apple_posH = random.randint(0, WINDOW_HEIGHT/blockSize - blockSize/10)
-        pygame.draw.rect(SCREEN, apple_color, pygame.Rect(apple_posW * blockSize, apple_posH * blockSize, blockSize, blockSize))
-        pygame.display.flip()
-        point += 1
-        tail_length += 1
-
+    time.sleep(0.1)
