@@ -143,3 +143,5 @@ while True:
         pygame.display.flip()
         point += 1
         tail_length += 1
+
+        pygame.display.set_caption(f"Snake Game | Points: {point}")
