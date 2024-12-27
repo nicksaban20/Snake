@@ -7,6 +7,9 @@ from pygame.locals import (
     K_DOWN,
     K_LEFT,
     K_RIGHT,
+    K_SPACE,
+    K_y,
+    K_n,
     K_ESCAPE,
     KEYDOWN,
     QUIT,
@@ -14,29 +17,36 @@ from pygame.locals import (
 
 logging.basicConfig(level=logging.DEBUG)
 
-black = (0, 0, 0)
-white = (200, 200, 200)
+black = (0, 0, 0) # Black
+white = (255, 255, 255) # White
+apple_color = (238, 75, 43) # Red
+snake_color = (57, 255, 20) # Green
+snake_head_color = (128, 128, 128) # Gray
 window_height = 800
 window_width = 800
+fps = 10
+block_size = 20
+
 
 pygame.init()
 SCREEN = pygame.display.set_mode((window_width, window_height))
 CLOCK = pygame.time.Clock()
 SCREEN.fill(black)
 
-block_size = 20
 direction = 0
 points = 0
-tail_length = 1
-red = (255, 0, 0)
-snake_color = (57, 255, 20)
-snake_head_color = (128, 128, 128)
-apple_color = (238, 75, 43)
 apple_posW = random.randint(0, window_width//block_size - 1)
 apple_posH = random.randint(0, window_height//block_size - 1)
-snake_x, snake_y = (100, 60)
+snake_x, snake_y = 0, 0
+while True:
+    snake_x, snake_y = (random.randint(0, window_width//block_size - 1) * block_size, random.randint(0, window_width//block_size - 1) * block_size)
+    if snake_x != apple_posW * block_size or snake_y != apple_posH * block_size:
+        wait = True
+        break
 snake_location = [snake_x, snake_y]
 font_style = pygame.font.SysFont(None, 50)
+snake_body = [[140, 60], [120, 60], [100, 60], [80, 60]]
+
 
 def message(msg, color):
     mesg = font_style.render(msg, True, color)
@@ -48,25 +58,89 @@ def drawGrid():
             rect = pygame.Rect(x, y, block_size, block_size)
             pygame.draw.rect(SCREEN, white, rect, 1)
 
-snake_body = [[140, 60], [120, 60], [100, 60], [80, 60]]
-
-# def drawSnake():
-#     for segment in snake_body:
-#         pygame.draw.rect(SCREEN, snake_color, pygame.Rect(segment[0], segment[1], block_size, block_size))
-
 def drawSnake():
     for index, segment in enumerate(snake_body):
-        if index == len(snake_body) - 1:  # This is the head
+        if index == len(snake_body) - 1:  # Head of the snake
             pygame.draw.rect(SCREEN, snake_head_color, pygame.Rect(segment[0], segment[1], block_size, block_size))
         else:
             pygame.draw.rect(SCREEN, snake_color, pygame.Rect(segment[0], segment[1], block_size, block_size))
 
+def debug():
+    logging.debug(f"Snake body: {snake_body}")
+    logging.debug(f"Apple position: {apple_posW * block_size}, {apple_posH * block_size}")
+    logging.debug(f"Snake x and y: {snake_x}, {snake_y}")
+    logging.debug(f"Direction: {direction}")
 
-while True:
-    drawGrid()
-    pygame.display.set_caption(f"Snake Game | points: {points}")
+def endGame():
+    SCREEN.fill(white)
+    message(f"You lost and got {points} points!", apple_color)
+    pygame.display.update()
+    time.sleep(2)
+    pygame.quit()
+    exit()
 
+def restartGame():
+    global direction, points, apple_posW, apple_posH, snake_x, snake_y, snake_location, snake_body, fps
+    SCREEN.fill(white)
+    message("Would you like to restart the game? (y/n)", black)
+    pygame.display.update()
+    time.sleep(5)
     for event in pygame.event.get():
+        if event.type == KEYDOWN:
+            if event.key == K_y:
+                direction = 0
+                points = 0
+                apple_posW = random.randint(0, window_width//block_size - 1)
+                apple_posH = random.randint(0, window_height//block_size - 1)
+                snake_x, snake_y = 0, 0
+                while True:
+                    snake_x, snake_y = (random.randint(0, window_width//block_size - 1) * block_size, random.randint(0, window_width//block_size - 1) * block_size)
+                    if snake_x != apple_posW * block_size or snake_y != apple_posH * block_size:
+                        break
+                snake_location = [snake_x, snake_y]
+                snake_body = [[140, 60], [120, 60], [100, 60], [80, 60]]
+                fps = 10
+                startGame()
+                break
+            if event.key == K_n:
+                endGame()
+                break
+    message("Restarting the game...", black)
+    pygame.display.update()
+    time.sleep(1)
+
+def pauseGame():
+    SCREEN.fill(white)
+    message("Game paused", black)
+    pygame.display.update()
+    time.sleep(1)
+
+def resumeGame():
+    SCREEN.fill(white)
+    message("Game resumed", black)
+    pygame.display.update()
+    time.sleep(1)
+
+wait = True
+while True:
+    for event in pygame.event.get():
+        if event.type == KEYDOWN:
+            if event.key == K_SPACE:
+                pauseGame()
+                while wait:
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            pygame.quit()
+                            exit()
+                        if event.type == KEYDOWN:
+                            if event.key == K_ESCAPE:
+                                pygame.quit()
+                                exit()
+                            if event.key == pygame.K_SPACE:
+                                resumeGame()
+                                wait = False
+                                break
+                    
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
@@ -74,6 +148,8 @@ while True:
             if event.key == K_ESCAPE:
                 pygame.quit()
                 exit()
+    drawGrid()
+    pygame.display.set_caption(f"Snake Game | points: {points}")
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_UP] and direction != 2:
@@ -86,12 +162,8 @@ while True:
         direction = 4  
 
     if snake_x == 0 and direction == 3 or snake_x == window_width - block_size and direction == 4 or snake_y == 0 and direction == 1 or snake_y == window_height - block_size and direction == 2:
-        SCREEN.fill(white)
-        message(f"You lost and got {points} points!", red)
-        pygame.display.update()
-        time.sleep(2)
-        pygame.quit()
-        exit()
+        restartGame()
+        continue
 
     if direction == 1 and snake_y > 0:
         snake_y -= block_size
@@ -103,15 +175,14 @@ while True:
         snake_x += block_size
 
     snake_body.append([snake_x, snake_y])
-    if len(snake_body) > tail_length:
-        del snake_body[0]
+    del snake_body[0]
 
     if snake_x == (apple_posW * block_size) and snake_y == (apple_posH * block_size):
         apple_posW = random.randint(0, window_width//block_size - 1)
         apple_posH = random.randint(0, window_height//block_size - 1)
-        snake_body.append([snake_x, snake_y])
+        snake_body.insert(0, snake_body[0])
         points += 1
-        tail_length += 1
+        fps += 1
 
     SCREEN.fill(black)
     drawGrid()
@@ -119,10 +190,10 @@ while True:
     pygame.draw.rect(SCREEN, apple_color, pygame.Rect(apple_posW * block_size, apple_posH * block_size, block_size, block_size))
     pygame.display.flip()
 
-    logging.debug(f"Snake body: {snake_body}")
-    logging.debug(f"Apple position: {apple_posW * block_size}, {apple_posH * block_size}")
-    logging.debug(f"Snake head: {snake_x}, {snake_y}")
-    logging.debug(f"Tails: {tail_length}")
-    logging.debug(f"Direction: {direction}")
+    debug()
 
-    CLOCK.tick(10)  # Set the frame rate to 10 FPS
+    if [snake_x, snake_y] in snake_body[:-1] and direction != 0:
+        restartGame()
+        continue
+
+    CLOCK.tick(fps)  # Set the frame rate to 10 FPS
